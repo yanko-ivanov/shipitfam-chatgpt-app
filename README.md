@@ -12,7 +12,7 @@ It is the same MCP server the [Claude plugin](https://github.com/yanko-ivanov/sh
 
 ## Install
 
-You need a ShipItFam account. Create one at [shipitfam.com](https://shipitfam.com). You do not need a project yet: once your assistant is connected, ask it to create one ("Create a ShipItFam project called Landing from the blank starter"). It lists the starters with `project_starter_list` and creates the project with `project_create`. Missions run on projects created from a starter.
+You need a ShipItFam account. Create one at [shipitfam.com](https://shipitfam.com). You do not need a project yet: once your assistant is connected, ask it to create one ("Create a ShipItFam project called Landing from the blank starter"). It lists the starters with `project_starter_list` and creates the project with `project_create`. A new project runs missions when it is created from a starter (a project you already have may run them too: `core_v2` in `project_list` says).
 
 ### ChatGPT (custom connector, developer mode)
 
