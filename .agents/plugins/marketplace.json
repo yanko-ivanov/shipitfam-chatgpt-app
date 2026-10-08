@@ -1,0 +1,20 @@
+{
+  "name": "shipitfam",
+  "interface": {
+    "displayName": "ShipItFam"
+  },
+  "plugins": [
+    {
+      "name": "shipitfam",
+      "source": {
+        "source": "local",
+        "path": "./plugins/shipitfam"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Coding"
+    }
+  ]
+}

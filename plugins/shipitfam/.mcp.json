@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "shipitfam": {
+      "type": "streamable-http",
+      "url": "https://shipitfam.com/mcp"
+    }
+  }
+}

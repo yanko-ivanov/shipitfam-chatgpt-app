@@ -1,0 +1,35 @@
+{
+  "name": "shipitfam",
+  "version": "1.0.0",
+  "description": "Drive your ShipItFam AI dev crew from ChatGPT or Codex: create projects from starters, start missions, answer the crew, review previews and ship.",
+  "author": {
+    "name": "Yanko Ivanov",
+    "url": "https://github.com/yanko-ivanov"
+  },
+  "homepage": "https://shipitfam.com",
+  "repository": "https://github.com/yanko-ivanov/shipitfam-chatgpt-app",
+  "license": "MIT",
+  "keywords": ["shipitfam", "ai-dev-team", "mcp", "missions", "ship"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "ShipItFam",
+    "shortDescription": "Steer your AI dev crew",
+    "longDescription": "ShipItFam is an AI dev team you keep on a leash. Describe a goal and a crew of specialist agents plans and builds it, and nothing risky or final happens without your approval. Connect your account, then create projects from starters, start missions, answer the crew's questions, approve plans, review live previews and ship to your repo, all from the conversation.",
+    "developerName": "Yanko Ivanov",
+    "category": "Coding",
+    "capabilities": ["Read", "Write"],
+    "websiteURL": "https://shipitfam.com",
+    "supportURL": "https://shipitfam.com/contact.html",
+    "privacyPolicyURL": "https://shipitfam.com/privacy.html",
+    "termsOfServiceURL": "https://shipitfam.com/terms.html",
+    "defaultPrompt": [
+      "What does my ShipItFam crew need from me right now?",
+      "Start a ShipItFam mission: add a pricing section to my landing page",
+      "Show me the preview of my latest ShipItFam mission and help me ship it"
+    ],
+    "brandColor": "#FF6B6B",
+    "composerIcon": "./assets/composer-icon.png",
+    "logo": "./assets/logo.png"
+  }
+}
