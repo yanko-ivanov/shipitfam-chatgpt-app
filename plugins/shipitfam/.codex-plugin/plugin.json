@@ -1,7 +1,7 @@
 {
   "name": "shipitfam",
-  "version": "1.0.0",
-  "description": "Drive your ShipItFam AI dev crew from ChatGPT or Codex: create projects from starters, start missions, answer the crew, review previews and ship.",
+  "version": "1.1.0",
+  "description": "Run your ShipItFam AI dev crew from ChatGPT or Codex: queue missions, approve plans and answer the crew, follow up, set how much it asks you, and review previews.",
   "author": {
     "name": "Yanko Ivanov",
     "url": "https://github.com/yanko-ivanov"
@@ -15,7 +15,7 @@
   "interface": {
     "displayName": "ShipItFam",
     "shortDescription": "Steer your AI dev crew",
-    "longDescription": "ShipItFam is an AI dev team you keep on a leash. Describe a goal and a crew of specialist agents plans and builds it, and nothing risky or final happens without your approval. Connect your account, then create projects from starters, start missions, answer the crew's questions, approve plans, review live previews and ship to your repo, all from the conversation.",
+    "longDescription": "ShipItFam is an AI dev team you keep on a leash. Describe a goal and a crew of specialist agents plans and builds it, and nothing risky or final happens without your approval. Connect your account, then run it from the conversation: queue missions, approve or revise plans, answer the crew's questions, allow or deny risky commands, follow up on finished work, set how much the crew asks you, review live previews and ship to your repo.",
     "developerName": "Yanko Ivanov",
     "category": "Coding",
     "capabilities": ["Read", "Write"],
@@ -25,8 +25,8 @@
     "termsOfServiceURL": "https://shipitfam.com/terms.html",
     "defaultPrompt": [
       "What does my ShipItFam crew need from me right now?",
-      "Start a ShipItFam mission: add a pricing section to my landing page",
-      "Show me the preview of my latest ShipItFam mission and help me ship it"
+      "Queue a ShipItFam mission: add a pricing section to my landing page",
+      "Follow up on my latest finished ShipItFam mission: make the headline shorter"
     ],
     "brandColor": "#FF6B6B",
     "composerIcon": "./assets/composer-icon.png",

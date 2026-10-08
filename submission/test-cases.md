@@ -1,10 +1,10 @@
 # Test cases
 
-Run these against the reviewer test account (see `reviewer-notes.md`) with ShipItFam connected. The account needs no seeded data. Every positive case is either read-only or creates its own fresh state, so each can be run on its own, in any order, any number of times: P1 to P3 only read, and P4 and P5 create the project (and mission) they work on from scratch. A repeated run adds another project with the same name, which is harmless (names are not unique).
+Run these against the reviewer test account (see `reviewer-notes.md`) with ShipItFam connected. The account needs no seeded data. Every positive case is either read-only or creates its own fresh state, so each can be run on its own, in any order, any number of times: P1 to P3 only read, and P4 and P5 create the project (and missions) they work on from scratch. A repeated run adds another project with the same name, which is harmless (names are not unique).
 
-Tool names are the ShipItFam MCP tool ids. "Expected tool calls" lists the calls in order. Extra read-only calls (`project_list`, `project_starter_list`, `mission_get`, `helm_feed`) before or after are fine.
+Tool names are the ShipItFam MCP tool ids, all of them in the hosted catalog (`app-metadata.md` lists it). "Expected tool calls" lists the calls in order. Extra read-only calls (`project_list`, `project_starter_list`, `project_get`, `mission_list`, `mission_get`, `inbox`) before or after are fine.
 
-No crew runs during these cases: the projects they create have no cloud workspace (`auto_provision` false), so a mission created in P5 stays queued and is cancelled in the same case. The cases check the tool calls and the first state, not a finished build.
+No crew runs during these cases: the projects they create have no cloud workspace (`auto_provision` false), so a mission stays queued and is cancelled in the same case. The cases check the tool calls and the first state, not a finished build. In none of them may the assistant call `project_provision` or `project_wake`, which would start cloud infrastructure.
 
 ## Positive cases
 
@@ -17,8 +17,8 @@ No crew runs during these cases: the projects they create have no cloud workspac
 ### P2. What needs me (read-only)
 
 - **Prompt:** `What does my ShipItFam crew need from me right now?`
-- **Expected tool calls:** `request_list`, then `mission_get` for the mission behind each open request (optional). On an account with a legacy project the assistant also calls `helm_feed` before it says nothing is waiting.
-- **Expected result:** every request that `request_list` returns described in plain language, no more and no fewer, or a clear "nothing needs you" when none is open. The assistant offers to help and does not answer anything itself. No write tool is called.
+- **Expected tool calls:** `inbox`, then `request_get` for the mission behind each open request (optional).
+- **Expected result:** every request that `inbox` returns described in plain language, no more and no fewer, or a clear "nothing needs you" when none is open. The assistant offers to help and does not answer anything itself. No write tool is called.
 
 ### P3. Browse the starters (read-only)
 
@@ -26,23 +26,28 @@ No crew runs during these cases: the projects they create have no cloud workspac
 - **Expected tool calls:** `project_starter_list`
 - **Expected result:** the starters in plain language (title, one line, category), including the empty `blank` starter, and an offer to create a project from one. The assistant does not create anything. No write tool is called.
 
-### P4. Create a project from a starter (creates its own project)
+### P4. Create a project and change how much the crew asks (creates its own project)
 
-- **Prompt:** `Create a ShipItFam project called "ShipItFam review check" from the blank starter. Don't set up a cloud workspace yet.`
-- **Expected tool calls:** `project_starter_list` (optional, to confirm the key), then `project_create` with `name` "ShipItFam review check", `starter_key` "blank" and `auto_provision` false. No `repo_url`, and `push_mode` omitted or "off".
-- **Expected result:** the assistant confirms the project was created, that it can run missions (`core_v2` true), that it has no remote repo and no cloud workspace yet, and offers to start a mission on it. No other write call is made.
+- **Prompt:** `Create a ShipItFam project called "ShipItFam review settings" from the blank starter, without a cloud workspace. Then turn plan approval off for it and make the crew pause after every step, and show me the settings.`
+- **Expected tool calls, in order:**
+  1. `project_starter_list` (optional, to confirm the key).
+  2. `project_create` with `name` "ShipItFam review settings", `starter_key` "blank" and `auto_provision` false. No `repo_url`, and `push_mode` omitted or "off".
+  3. `project_settings_set` with the new project's `project_id`, `approve_plan` false and `pause_after_step` true. `approve_risky` and `keep_working` are not changed.
+  4. `project_get` for that project (optional, to show the settings).
+- **Expected result:** the assistant confirms the project was created and can run missions (`core_v2` true), then states the four settings in plain words: plan approval off, risky-command approval still on, pause after every step on, keep working off. No other write call is made.
 
-### P5. Start, steer and cancel a mission (creates its own project and mission)
+### P5. Queue two missions, add a note and cancel them (creates its own project and missions)
 
-- **Prompt:** `Create a ShipItFam project called "ShipItFam review mission" from the blank starter, without a cloud workspace. Start a mission on it: add a pricing section with three tiers to the landing page. Then add this note for the crew, "keep the copy short", and cancel the mission.`
+- **Prompt:** `Create a ShipItFam project called "ShipItFam review queue" from the blank starter, without a cloud workspace. Queue two missions on it, first "Add a pricing section with three tiers to the landing page" and then "Add an FAQ section". Show me the queue. Then add this note for the crew on the pricing mission, "keep the copy short", and cancel both missions.`
 - **Expected tool calls, in order:**
   1. `project_create` with `starter_key` "blank" and `auto_provision` false (optionally after `project_starter_list`).
-  2. `mission_create` with the new project's `project_id` and a `title` close to the user's words (optionally `text`). `quick` is not set.
-  3. `mission_get` for the new mission, to read the actions its card offers.
-  4. `action` with that `mission_id`, `action_id` "comment" and `text` "keep the copy short".
-  5. `action` with that `mission_id` and the cancel id the card lists (`cancel`, or `skip` labelled "Cancel mission" when the open request offers it). ChatGPT may ask for confirmation, because `action` is annotated destructive: confirm it.
-  Re-reads with `mission_get` between the steps are fine.
-- **Expected result:** the assistant reports each step in plain language: the project exists, the mission was created and what the crew would do first (write a spec and maybe ask questions), the note was added, the mission was cancelled. It says no crew ran because the project has no workspace, and does not claim any progress. The prompt itself asks for the note and the cancel, so the assistant may run them directly; it may also repeat the cancel back once before running it, and a yes then completes the case.
+  2. `mission_create` for the pricing mission, with the new project's `project_id` and a `title` close to the user's words (optionally `text`). `quick` is not set.
+  3. `mission_create` for the FAQ mission, the same way.
+  4. `mission_list` for the project.
+  5. `mission_comment` with the pricing mission's `mission_id` and `text` "keep the copy short". No `step_id`.
+  6. `mission_cancel` for the pricing mission, then `mission_cancel` for the FAQ mission. ChatGPT may ask for confirmation, because `mission_cancel` is annotated destructive: confirm it.
+  Re-reads with `mission_get` or `mission_list` between the steps are fine.
+- **Expected result:** the assistant reports each step in plain language: the project exists, both missions are queued under Up next with the pricing mission first (they run oldest first), the project has no crew yet (the Deck says so), the note was saved for the crew, both missions were cancelled. It says nothing started because the project has no workspace, and does not claim any progress. The prompt itself asks for the note and the cancels, so the assistant may run them directly; it may also repeat the cancel back once before running it, and a yes then completes the case.
 
 ## Negative cases
 
@@ -54,10 +59,14 @@ No crew runs during these cases: the projects they create have no cloud workspac
 ### N2. General coding question
 
 - **Prompt:** `Write a Python function that reverses a string.`
-- **Expected tool calls:** none. The assistant answers directly. It may mention that ShipItFam can build bigger things, but must not create a project or start a mission.
+- **Expected tool calls:** none. The assistant answers directly. It may mention that ShipItFam can build bigger things, but must not create a project or queue a mission.
 
 ### N3. Bulk destructive request
 
 - **Prompt:** `Delete all my ShipItFam projects.`
 - **Expected tool calls:** at most `project_list`. No `project_delete` call.
 - **Expected result:** the assistant lists the projects, says deletion is permanent, and asks which project to delete and for an explicit yes naming it. It deletes nothing until the user confirms a specific project.
+
+## Not covered by these cases
+
+`request_get`, `request_answer`, `request_use_login`, `job_log`, `step_diff`, `preview_pick` and `project_wake` act on a mission that has reached a request, a step or a preview, which only happens when a crew runs it on the owner's Claude login. The cases above never start one, so these tools are shown in the demo recording instead (see `app-metadata.md`). With a provisioned project that has an open request on the account, a reviewer can try them by hand: ask "what does my crew need from me", read the plan, and answer it. The assistant must show the plan and wait for a yes before it approves.

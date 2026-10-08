@@ -1,6 +1,6 @@
 # ShipItFam for ChatGPT and Codex
 
-Drive your [ShipItFam](https://shipitfam.com) AI dev crew from ChatGPT or Codex. ShipItFam is a human-in-the-loop AI dev team: you describe a goal, a crew of specialist agents plans and builds it, and nothing risky or final happens without your say-so. This app lets your assistant list your projects, create new ones from a starter, start missions, show you what the crew is waiting on, carry your answers back, open previews and ship.
+Run your [ShipItFam](https://shipitfam.com) AI dev crew from ChatGPT or Codex. ShipItFam is a human-in-the-loop AI dev team: you describe a goal, a crew of specialist agents plans and builds it, and nothing risky or final happens without your say-so. This app lets your assistant do the whole job of running it with you: queue missions, show what the crew is waiting on, carry your approvals and answers back, follow up on finished work, steer a mission that is running, change how much the crew asks you, and open previews.
 
 It is the same MCP server the [Claude plugin](https://github.com/yanko-ivanov/shipitfam-claude-plugin) uses: `https://shipitfam.com/mcp`.
 
@@ -45,26 +45,32 @@ Do not add an `Authorization` header to the MCP config. A static header switches
 
 ## Using it
 
-- "What can I start a ShipItFam project from?"
-- "Create a ShipItFam project called Landing from the blank starter."
-- "What projects do I have on ShipItFam?"
-- "Start a mission on my landing page project: add a pricing section with three tiers."
-- "Approve the plan for the pricing mission."
-- "Show me the preview and ship it if it looks right."
+Say it in plain words:
 
-The crew runs on your own Claude login, which you set up in the ShipItFam app. If a step fails with "Claude is not logged in on this project", sign in to Claude in the app and retry.
+- "What does my ShipItFam crew need from me right now?"
+- "Queue a mission on my landing page project: add a pricing section with three tiers."
+- "Show me the plan for the pricing mission. If it looks right, approve it."
+- "How is the pricing mission going? What is the crew doing right now?"
+- "The pricing mission is done. Follow up: make the middle tier the highlighted one."
+- "Stop pausing me on every plan for the landing page project, but keep asking before risky commands."
+- "Show me the preview of the pricing mission."
+- "What can I start a ShipItFam project from?" then "Create one called Landing from the blank starter."
+
+The loop behind it: `inbox` shows what the crew waits on, `request_get` reads one request in full and `request_answer` carries your decision back. `mission_create` queues a mission (they run oldest first, one at a time per crew), `mission_list`, `mission_get`, `job_log` and `step_diff` let your assistant watch it, `mission_comment` follows up or steers, and `project_settings_set` sets how much the crew asks you. Your assistant shows you a plan, a risky command or a "Ship it?" and waits for your yes before it approves, allows or ships; skipping a step and cancelling a mission need your yes as well. If you say so up front ("approve the plan for the pricing mission"), that is your yes.
+
+The crew runs on your own Claude login, which you set up in the ShipItFam app. If a step fails with "Claude is not logged in on this project", your assistant offers to reuse a login you already have working on another project, or sends you to the app to sign in.
 
 ## What your assistant is allowed to do
 
-The server exposes 78 tools, and every one declares `title`, `readOnlyHint`, `destructiveHint` and `openWorldHint`:
+The server exposes 57 tools, and every one declares `title`, `readOnlyHint`, `destructiveHint` and `openWorldHint`:
 
 | Class | Tools | Hints |
 |---|---|---|
-| Read-only | 27 (every `*_list` and `*_get`, `helm_feed`, `preview_get`, `preview_get_main`, `project_box_diagnostic`, `project_provisioning_status`, `session_inspect_all`, `context_pack_get`, `changelog_list`) | `readOnlyHint` true |
-| Write | 37 (creates and edits, for example `project_create`, `mission_create`, `project_update`, `project_settings_set`) | `readOnlyHint` false, `destructiveHint` false |
-| Destructive | 14 (every `*_delete`, `session_stop`, `session_cleanup`, `session_force_resume`, `approval_reject`, `project_repo_credential_clear`, `project_invite_revoke`, and `action`) | `destructiveHint` true |
+| Read-only | 21 (every `*_list` and `*_get`, `inbox`, `request_get`, `job_log`, `step_diff`, `project_starter_list`, `routine_run_list`, `preview_get_main`, `project_box_diagnostic`, `project_provisioning_status`) | `readOnlyHint` true |
+| Write | 26 (creates and edits, for example `project_create`, `mission_create`, `mission_comment`, `preview_pick`, `project_settings_set`, `project_wake`) | `readOnlyHint` false, `destructiveHint` false |
+| Destructive | 10 (every `*_delete`, `mission_cancel`, `project_repo_credential_clear`, `project_invite_revoke`, and `request_answer`) | `destructiveHint` true |
 
-`openWorldHint` is true on exactly two tools, because the call itself reaches outside your ShipItFam account: `mcp_server_verify` (calls the URL you registered for an MCP server) and `action` (on a "Ship it?" card it pushes the mission branch to your git remote). It is false on the other 76. `action` is destructive because it is how a mission card is answered, cancelled or shipped, so ChatGPT may ask you to confirm it.
+`openWorldHint` is true on exactly two tools, because the call itself reaches outside your ShipItFam account: `mcp_server_verify` (calls the URL you registered for an MCP server) and `request_answer` (on a "Ship it?" request it pushes the mission branch to your git remote). It is false on the other 55. `request_answer` is destructive because it is how a request is answered: approving a plan, allowing a command, cancelling a mission and shipping all go through it, so ChatGPT may ask you to confirm it.
 
 A connected app cannot change your billing or manage your Claude logins: those stay behind your own ShipItFam session, so your assistant sends you to the app for them.
 
@@ -80,7 +86,7 @@ plugins/shipitfam/
   assets/composer-icon.png                  512x512 composer icon
 submission/
   app-metadata.md                           listing text, URLs, auth summary
-  test-cases.md                             5 positive (read-only, or creating their own state) and 3 negative test cases
+  test-cases.md                             5 positive (read-only, or creating their own state) and 3 negative test cases, hosted tools only
   reviewer-notes.md                         OAuth facts and reviewer instructions
 ```
 
