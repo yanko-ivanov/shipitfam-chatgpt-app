@@ -33,7 +33,9 @@ Connect your ShipItFam account and ChatGPT can run the whole loop with you:
 - follow up on finished work, steer a running step, or leave the crew a note,
 - set how much the crew asks you: plan approval, risky commands, a pause after every step, and whether it keeps working while a mission waits on you,
 - open a mission's live preview and its pull request,
-- manage routines and see the runs they fired, the Treasure map (project knowledge) and your team.
+- manage routines and see the runs they fired, the Treasure map (project knowledge) and your team,
+- connect an app such as Slack or HubSpot to a project (you authorize it in your own browser) so the crew can use it, and disconnect it again,
+- find a skill on a marketplace and, after you have read the whole text and every finding, import it as a new agent type for a project.
 
 You stay in charge. Plans, risky commands and shipping always wait for your yes, and you can revoke ChatGPT's access at any time from MCP access in ShipItFam.
 
@@ -76,27 +78,32 @@ Full OAuth facts are in `reviewer-notes.md`.
 Computed from the built control-mcp (`buildTools` with the default config: no v1 workflow tools, no credential tool), not typed by hand. The authoritative list is `TOOL_SPECS` in ShipItFam's control-mcp (`kind`, `idempotent`, `openWorld` per tool); re-check this section against it before submitting.
 
 <!-- annotations:start -->
-The hosted server exposes **57 tools**. Every one declares `title`, `readOnlyHint`, `destructiveHint` and `openWorldHint`, and 38 also declare `idempotentHint` (all 21 read-only tools, plus the writes and destructive calls where repeating the call changes nothing further). The server serves no tool that returns a credential, and no v1 workflow tool.
+The hosted server exposes **65 tools**. Every one declares `title`, `readOnlyHint`, `destructiveHint` and `openWorldHint`, and 44 also declare `idempotentHint` (all 25 read-only tools, plus the writes and destructive calls where repeating the call changes nothing further). The server serves no tool that returns a credential, and no v1 workflow tool.
 
 | Class | Count | Annotations |
 |---|---|---|
-| Read-only | 21 | `readOnlyHint` true, `destructiveHint` false, `idempotentHint` true |
-| Write | 26 | `readOnlyHint` false, `destructiveHint` false |
-| Destructive | 10 | `readOnlyHint` false, `destructiveHint` true |
+| Read-only | 25 | `readOnlyHint` true, `destructiveHint` false, `idempotentHint` true |
+| Write | 29 | `readOnlyHint` false, `destructiveHint` false |
+| Destructive | 11 | `readOnlyHint` false, `destructiveHint` true |
 
-**Read-only (21):** `project_starter_list`, `project_list`, `project_get`, `project_box_diagnostic`, `component_list`, `project_member_list`, `project_invite_list`, `agent_type_list`, `project_agent_type_list`, `mcp_server_list`, `routine_list`, `routine_run_list`, `project_provisioning_status`, `preview_get_main`, `ship_log_list`, `inbox`, `request_get`, `mission_list`, `mission_get`, `job_log`, `step_diff`.
+**Read-only (25):** `project_starter_list`, `project_list`, `project_get`, `project_box_diagnostic`, `component_list`, `project_member_list`, `project_invite_list`, `agent_type_list`, `project_agent_type_list`, `agent_type_marketplace_search`, `agent_type_import_preview`, `agent_type_import_check`, `mcp_server_list`, `integration_list`, `routine_list`, `routine_run_list`, `project_provisioning_status`, `preview_get_main`, `ship_log_list`, `inbox`, `request_get`, `mission_list`, `mission_get`, `job_log`, `step_diff`.
 
-**Write (26):** `project_create`, `project_update`, `project_repo_credential_set`, `project_fleet_update`, `component_create`, `project_member_add`, `project_invite_create`, `agent_type_create`, `agent_type_update`, `agent_type_enable`, `agent_type_disable`, `mcp_server_create`, `mcp_server_update`, `mcp_server_verify`, `routine_create`, `routine_update`, `project_provision`, `project_wake`, `ship_log_add`, `ship_log_update`, `request_use_login`, `mission_create`, `mission_comment`, `mission_dismiss`, `preview_pick`, `project_settings_set`.
+**Write (29):** `project_create`, `project_update`, `project_repo_credential_set`, `project_fleet_update`, `component_create`, `project_member_add`, `project_invite_create`, `agent_type_create`, `agent_type_update`, `agent_type_enable`, `agent_type_disable`, `agent_type_import`, `agent_type_import_update`, `mcp_server_create`, `mcp_server_update`, `mcp_server_verify`, `integration_connect`, `routine_create`, `routine_update`, `project_provision`, `project_wake`, `ship_log_add`, `ship_log_update`, `request_use_login`, `mission_create`, `mission_comment`, `mission_dismiss`, `preview_pick`, `project_settings_set`.
 
-**Destructive (10):** `project_delete`, `project_repo_credential_clear`, `component_delete`, `project_invite_revoke`, `agent_type_delete`, `mcp_server_delete`, `routine_delete`, `ship_log_delete`, `request_answer`, `mission_cancel`.
+**Destructive (11):** `project_delete`, `project_repo_credential_clear`, `component_delete`, `project_invite_revoke`, `agent_type_delete`, `mcp_server_delete`, `integration_disconnect`, `routine_delete`, `ship_log_delete`, `request_answer`, `mission_cancel`.
 
-**Open world (`openWorldHint` true) on exactly 2 tools, false on the other 55:**
+**Open world (`openWorldHint` true) on exactly 7 tools, false on the other 58:**
 
+- `agent_type_marketplace_search` (read)
+- `agent_type_import_preview` (read)
+- `agent_type_import` (write)
+- `agent_type_import_check` (read)
+- `agent_type_import_update` (write)
 - `mcp_server_verify` (write)
 - `request_answer` (destructive)
 <!-- annotations:end -->
 
-`request_answer` is how the assistant answers a request (approve a plan, allow a command, reply, skip, ship), so it is destructive and ChatGPT may show a confirmation before each of those calls. That is expected. Its "Ship it?" answer is the one place a call pushes work to the user's git remote, which is why it is open world. Every other tool acts on the signed-in user's own ShipItFam account. Tools that only store configuration for an agent to use later (for example `mcp_server_create`) or that call ShipItFam's own infrastructure (for example `component_list`) are not open world.
+`request_answer` is how the assistant answers a request (approve a plan, allow a command, reply, skip, ship), so it is destructive and ChatGPT may show a confirmation before each of those calls. That is expected. Its "Ship it?" answer is the one place a call pushes work to the user's git remote, which is why it is open world. `mcp_server_verify` is open world because it calls the URL the user registered. The five skill marketplace tools (`agent_type_marketplace_search`, `agent_type_import_preview`, `agent_type_import`, `agent_type_import_check`, `agent_type_import_update`) are open world because each call fetches from the public internet (SkillsMP search, GitHub); the search, the preview and the update check store nothing and are read-only. Every other tool acts on the signed-in user's own ShipItFam account. Tools that only store configuration for an agent to use later (for example `mcp_server_create`) or that call ShipItFam's own infrastructure (for example `component_list`) are not open world, and neither are the `integration_*` tools: `integration_connect` returns a link the user opens and authorizes in their own browser, and the call itself reaches only ShipItFam and its own Nango (the connection broker). `integration_disconnect` removes a connected app and is annotated destructive. `agent_type_import` and `agent_type_import_update` are the only tools that act on text a third party wrote, so the assistant must show the user the whole skill and every finding first, and ShipItFam refuses any finding or licence acknowledgement that comes through a connected app (`403 app_review_required`); a skill that needs one is imported in the ShipItFam app.
 
 ## Data handling
 
@@ -115,7 +122,7 @@ The submission requirements are on https://developers.openai.com/apps-sdk/deploy
 - TODO(owner): demo recording URL, a video walkthrough reviewers can open. OpenAI reads it from `extensions.com.openai.review.demo_recording_url` in the package manifest. When that `extensions.com.openai` object exists, OpenAI ignores `.codex-plugin/plugin.json`, so decide how to package it: either a root `plugin.json` that repeats the `interface` block (including `supportURL`) under `extensions.com.openai`, or the dashboard form if it offers the field. Record it on a provisioned project, because the test cases never run a crew: show create from a starter, queue a mission, approve the plan, answer a question, watch the log, set the settings, follow up, preview, ship.
 - TODO(owner): screenshots of the app in use (the dashboard asks for specific sizes at submission time).
 - TODO(owner): the privacy policy and terms pages currently carry placeholder copy pending legal review. Finish them before submitting: reviewers read them.
-- TODO(owner): run every case in `test-cases.md` once against production with the reviewer account and compare the tool calls. The cases were written from the code, not from a live run, and the live smoke of the hosted catalog (doc 52, section 7.3) has not run yet.
+- TODO(owner): run every case in `test-cases.md` once against production with the reviewer account and compare the tool calls. The cases were written from the code, not from a live run, and the live smoke of the hosted catalog (doc 55, section 7.3) has not run yet.
 - TODO(owner): `request_get`, `request_answer`, `request_use_login`, `job_log`, `step_diff`, `preview_pick` and `project_wake` need a mission that has reached a request or a step, which needs a running crew on the owner's Claude login. No test case can create that, so the demo recording must show them. Optionally keep one provisioned project with an open plan request on the reviewer account so a reviewer can try `request_get` and `request_answer` by hand.
 - TODO(owner): after each review, delete the leftover "ShipItFam review" projects the cases create (they are unprovisioned, so they cost nothing).
 - TODO(owner): release notes for the first version, and country targeting if it should not be everywhere. Both go under `extensions.com.openai.publication` (`release_notes`, `countries`) and are optional.

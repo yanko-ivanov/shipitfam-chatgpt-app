@@ -1,6 +1,6 @@
 {
   "name": "shipitfam",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Run your ShipItFam AI dev crew from ChatGPT or Codex: queue missions, approve plans and answer the crew, follow up, set how much it asks you, and review previews.",
   "author": {
     "name": "Yanko Ivanov",

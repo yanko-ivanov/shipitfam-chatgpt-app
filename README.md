@@ -55,6 +55,8 @@ Say it in plain words:
 - "Stop pausing me on every plan for the landing page project, but keep asking before risky commands."
 - "Show me the preview of the pricing mission."
 - "What can I start a ShipItFam project from?" then "Create one called Landing from the blank starter."
+- "Connect Slack to my landing page project." Your assistant gives you a link to open and authorize in your browser, then confirms the connection when you say you are done.
+- "Search the skill marketplace for a code review skill, show me the full text of the best one, and import it as an agent type for my landing page project if I say so." Your assistant shows you the whole skill and every finding before it imports anything.
 
 The loop behind it: `inbox` shows what the crew waits on, `request_get` reads one request in full and `request_answer` carries your decision back. `mission_create` queues a mission (they run oldest first, one at a time per crew), `mission_list`, `mission_get`, `job_log` and `step_diff` let your assistant watch it, `mission_comment` follows up or steers, and `project_settings_set` sets how much the crew asks you. Your assistant shows you a plan, a risky command or a "Ship it?" and waits for your yes before it approves, allows or ships; skipping a step and cancelling a mission need your yes as well. If you say so up front ("approve the plan for the pricing mission"), that is your yes.
 
@@ -62,15 +64,15 @@ The crew runs on your own Claude login, which you set up in the ShipItFam app. I
 
 ## What your assistant is allowed to do
 
-The server exposes 57 tools, and every one declares `title`, `readOnlyHint`, `destructiveHint` and `openWorldHint`:
+The server exposes 65 tools, and every one declares `title`, `readOnlyHint`, `destructiveHint` and `openWorldHint`:
 
 | Class | Tools | Hints |
 |---|---|---|
-| Read-only | 21 (every `*_list` and `*_get`, `inbox`, `request_get`, `job_log`, `step_diff`, `project_starter_list`, `routine_run_list`, `preview_get_main`, `project_box_diagnostic`, `project_provisioning_status`) | `readOnlyHint` true |
-| Write | 26 (creates and edits, for example `project_create`, `mission_create`, `mission_comment`, `preview_pick`, `project_settings_set`, `project_wake`) | `readOnlyHint` false, `destructiveHint` false |
-| Destructive | 10 (every `*_delete`, `mission_cancel`, `project_repo_credential_clear`, `project_invite_revoke`, and `request_answer`) | `destructiveHint` true |
+| Read-only | 25 (every `*_list` and `*_get`, `inbox`, `request_get`, `job_log`, `step_diff`, `project_starter_list`, `routine_run_list`, `preview_get_main`, `project_box_diagnostic`, `project_provisioning_status`, `integration_list`, and the marketplace reads `agent_type_marketplace_search`, `agent_type_import_preview` and `agent_type_import_check`) | `readOnlyHint` true |
+| Write | 29 (creates and edits, for example `project_create`, `mission_create`, `mission_comment`, `preview_pick`, `project_settings_set`, `project_wake`, `integration_connect`, `agent_type_import`, `agent_type_import_update`) | `readOnlyHint` false, `destructiveHint` false |
+| Destructive | 11 (every `*_delete`, `mission_cancel`, `project_repo_credential_clear`, `project_invite_revoke`, `integration_disconnect`, and `request_answer`) | `destructiveHint` true |
 
-`openWorldHint` is true on exactly two tools, because the call itself reaches outside your ShipItFam account: `mcp_server_verify` (calls the URL you registered for an MCP server) and `request_answer` (on a "Ship it?" request it pushes the mission branch to your git remote). It is false on the other 55. `request_answer` is destructive because it is how a request is answered: approving a plan, allowing a command, cancelling a mission and shipping all go through it, so ChatGPT may ask you to confirm it.
+`openWorldHint` is true on exactly seven tools, because the call itself reaches outside your ShipItFam account: `mcp_server_verify` (calls the URL you registered for an MCP server), `request_answer` (on a "Ship it?" request it pushes the mission branch to your git remote) and the five skill marketplace tools, `agent_type_marketplace_search`, `agent_type_import_preview`, `agent_type_import`, `agent_type_import_check` and `agent_type_import_update` (they fetch from SkillsMP and GitHub). It is false on the other 58, including the `integration_*` tools, which talk only to ShipItFam: you authorize the third-party app in your own browser. `request_answer` is destructive because it is how a request is answered: approving a plan, allowing a command, cancelling a mission and shipping all go through it, so ChatGPT may ask you to confirm it.
 
 A connected app cannot change your billing or manage your Claude logins: those stay behind your own ShipItFam session, so your assistant sends you to the app for them.
 

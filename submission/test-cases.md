@@ -1,6 +1,6 @@
 # Test cases
 
-Run these against the reviewer test account (see `reviewer-notes.md`) with ShipItFam connected. The account needs no seeded data. Every positive case is either read-only or creates its own fresh state, so each can be run on its own, in any order, any number of times: P1 to P3 only read, and P4 and P5 create the project (and missions) they work on from scratch. A repeated run adds another project with the same name, which is harmless (names are not unique).
+Run these against the reviewer test account (see `reviewer-notes.md`) with ShipItFam connected. The account needs no seeded data. Every positive case is either read-only or creates its own fresh state, so each can be run on its own, in any order, any number of times: P1 to P3, P6 and P7 only read, and P4 and P5 create the project (and missions) they work on from scratch. A repeated run adds another project with the same name, which is harmless (names are not unique).
 
 Tool names are the ShipItFam MCP tool ids, all of them in the hosted catalog (`app-metadata.md` lists it). "Expected tool calls" lists the calls in order. Extra read-only calls (`project_list`, `project_starter_list`, `project_get`, `mission_list`, `mission_get`, `inbox`) before or after are fine.
 
@@ -49,6 +49,18 @@ No crew runs during these cases: the projects they create have no cloud workspac
   Re-reads with `mission_get` or `mission_list` between the steps are fine.
 - **Expected result:** the assistant reports each step in plain language: the project exists, both missions are queued under Up next with the pricing mission first (they run oldest first), the project has no crew yet (the Deck says so), the note was saved for the crew, both missions were cancelled. It says nothing started because the project has no workspace, and does not claim any progress. The prompt itself asks for the note and the cancels, so the assistant may run them directly; it may also repeat the cancel back once before running it, and a yes then completes the case.
 
+### P6. Search the skill marketplace (read-only, open world)
+
+- **Prompt:** `Search the skill marketplace for a pdf processing skill.`
+- **Expected tool calls:** `agent_type_marketplace_search` with `q` close to "pdf processing". Nothing else is needed.
+- **Expected result:** a short list in plain language (name, author, one line, stars) with a GitHub link for each, and an offer to preview one. If the marketplace search is rate-limited or unavailable, the assistant says so in the server's words and offers to preview a GitHub link the user pastes instead. The assistant does not call `agent_type_import` and does not invent skills. This tool is annotated open world because the search text leaves ShipItFam; ChatGPT may say so before it runs.
+
+### P7. List connected apps (read-only)
+
+- **Prompt:** `Which apps can I connect to my ShipItFam projects, and which are connected to my review project?`
+- **Expected tool calls:** `project_list`, then `integration_list` for the project the user means (ask once if several fit, or if the account has none, say so and stop).
+- **Expected result:** the connectable apps and the connected ones in plain language, or a plain statement that connecting apps is unavailable on this server right now when the answer says so. The assistant does not call `integration_connect` or `integration_disconnect`. No write tool is called.
+
 ## Negative cases
 
 ### N1. Unrelated question
@@ -68,5 +80,7 @@ No crew runs during these cases: the projects they create have no cloud workspac
 - **Expected result:** the assistant lists the projects, says deletion is permanent, and asks which project to delete and for an explicit yes naming it. It deletes nothing until the user confirms a specific project.
 
 ## Not covered by these cases
+
+`integration_connect`, `integration_disconnect`, `agent_type_import`, `agent_type_import_check` and `agent_type_import_update` are not run either: connecting an app ends in the user authorizing a third-party app in their own browser, and an import needs a skill the user has read in full (a reviewer can try it by hand: search, preview, read the text and the findings, then say yes). The assistant must never import a skill before the user has seen its full text and every finding.
 
 `request_get`, `request_answer`, `request_use_login`, `job_log`, `step_diff`, `preview_pick` and `project_wake` act on a mission that has reached a request, a step or a preview, which only happens when a crew runs it on the owner's Claude login. The cases above never start one, so these tools are shown in the demo recording instead (see `app-metadata.md`). With a provisioned project that has an open request on the account, a reviewer can try them by hand: ask "what does my crew need from me", read the plan, and answer it. The assistant must show the plan and wait for a yes before it approves.
